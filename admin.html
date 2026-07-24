@@ -21,7 +21,6 @@
 
   .wrap { max-width: 760px; margin: 0 auto; padding: 28px; }
 
-  /* ---- Login ---- */
   #login-screen { max-width: 340px; margin: 80px auto; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 26px; }
   #login-screen h2 { margin-top: 0; font-size: 16px; }
   .field { margin-bottom: 14px; }
@@ -29,12 +28,13 @@
   .field input { width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
     border-radius: 7px; padding: 10px 11px; font-size: 13.5px; outline: none; }
   .field input:focus { border-color: var(--accent); }
-  .btn { width: 100%; padding: 11px; border: none; border-radius: 7px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  .btn { padding: 11px; border: none; border-radius: 7px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  .btn-block { width: 100%; }
   .btn-primary { background: linear-gradient(135deg, var(--accent), #57d1bc); color: #06251f; }
+  .btn-secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
   .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
   #login-error { color: var(--danger); font-size: 12.5px; margin-top: 10px; min-height: 16px; }
 
-  /* ---- Dashboard ---- */
   #dashboard { display: none; }
   .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 22px; margin-bottom: 22px; }
   .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 0 0 16px; }
@@ -43,14 +43,45 @@
   #upload-status { font-size: 12.5px; margin-top: 10px; color: var(--text-dim); min-height: 16px; }
 
   .tpl-list { display: flex; flex-direction: column; gap: 10px; }
-  .tpl-row { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px; }
+  .tpl-row { display: flex; align-items: center; gap: 10px; background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px; flex-wrap: wrap; }
   .tpl-row img { width: 64px; height: 40px; object-fit: cover; border-radius: 4px; background: #333; }
-  .tpl-row .meta { flex: 1; min-width: 0; }
+  .tpl-row .meta { flex: 1; min-width: 120px; }
   .tpl-row .meta strong { display: block; font-size: 13px; }
   .tpl-row .meta span { font-size: 11px; color: var(--text-dim); }
+  .tpl-row .actions { display: flex; gap: 6px; }
   .tpl-row button { flex-shrink: 0; padding: 7px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; }
   #empty-state { color: var(--text-dim); font-size: 13px; text-align: center; padding: 20px 0; }
+
+  /* ---- Layout editor ---- */
+  #editor-panel { display: none; }
+  .editor-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .editor-tab { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--panel-2);
+    color: var(--text-dim); font-size: 12.5px; cursor: pointer; }
+  .editor-tab.active { background: var(--accent); color: #06251f; border-color: var(--accent); font-weight: 600; }
+
+  .editor-stage-wrap { display: flex; justify-content: center; margin-bottom: 14px; }
+  #editor-stage { position: relative; width: 400px; max-width: 100%; height: 250px; border-radius: 10px;
+    overflow: hidden; background: #333; touch-action: none; }
+  #editor-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+
+  .drag-field { position: absolute; cursor: grab; border: 1px dashed rgba(47,182,163,0.9);
+    background: rgba(47,182,163,0.18); color: #fff; font-size: 10px; padding: 2px 5px;
+    white-space: nowrap; user-select: none; border-radius: 3px; }
+  .drag-field.box { display: flex; align-items: center; justify-content: center; text-align: center;
+    background: rgba(47,182,163,0.28); }
+  .drag-field:active { cursor: grabbing; }
+
+  .field-tune-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .field-tune-row { display: flex; align-items: center; gap: 8px; background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 10px; }
+  .field-tune-row .fname { flex: 1; font-size: 12px; color: var(--text-dim); }
+  .field-tune-row input { width: 56px; background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    border-radius: 5px; padding: 5px 6px; font-size: 12px; }
+  .field-tune-row label { font-size: 10.5px; color: var(--text-dim); }
+  .editor-hint { font-size: 11.5px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.5; }
+  .editor-actions { display: flex; gap: 10px; }
+  .editor-actions .btn { flex: 1; }
 </style>
 </head>
 <body>
@@ -75,7 +106,7 @@
       <label for="login-password">Password</label>
       <input type="password" id="login-password" autocomplete="current-password">
     </div>
-    <button class="btn btn-primary" id="btn-login">Log In</button>
+    <button class="btn btn-primary btn-block" id="btn-login">Log In</button>
     <div id="login-error"></div>
   </div>
 
@@ -98,7 +129,7 @@
           <input type="file" id="tpl-back" accept="image/*">
         </div>
       </div>
-      <button class="btn btn-primary" id="btn-upload">Upload Template</button>
+      <button class="btn btn-primary btn-block" id="btn-upload">Upload Template</button>
       <div id="upload-status"></div>
     </div>
 
@@ -106,6 +137,30 @@
       <h2>Existing Templates</h2>
       <div class="tpl-list" id="tpl-list"></div>
       <div id="empty-state" style="display:none;">No templates yet — add one above.</div>
+    </div>
+
+    <!-- ===== LAYOUT EDITOR ===== -->
+    <div class="panel" id="editor-panel">
+      <h2>Field Positions — <span id="editor-tpl-name"></span></h2>
+      <p class="editor-hint">Drag each label to line up with your template art. Fine-tune font size / box size below. This only affects this one template.</p>
+
+      <div class="editor-tabs">
+        <button class="editor-tab active" id="editor-tab-front">Front</button>
+        <button class="editor-tab" id="editor-tab-back">Back</button>
+      </div>
+
+      <div class="editor-stage-wrap">
+        <div id="editor-stage">
+          <img id="editor-bg" src="" alt="">
+        </div>
+      </div>
+
+      <div class="field-tune-list" id="field-tune-list"></div>
+
+      <div class="editor-actions">
+        <button class="btn btn-secondary" id="btn-editor-cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-editor-save">Save Layout</button>
+      </div>
     </div>
 
   </div>
@@ -118,8 +173,32 @@
   const SUPABASE_URL = 'https://sgiqazrmknpshrjpiarz.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnaXFhenJta25wc2hyanBpYXJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4ODkwMjEsImV4cCI6MjEwMDQ2NTAyMX0.VBHcfFhvYh3877yjIJ11ju_YLJyaJBZcWxLAaNgw7vY';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
   const BUCKET = 'templates';
+
+  // ---- Default field layouts (used when a template has none saved yet) ----
+  const DEFAULT_LAYOUT = {
+    front: {
+      title:    { type: 'text', label: 'Title',    top: 90,  left: 24,  fontSize: 20 },
+      name:     { type: 'text', label: 'Name',      top: 130, left: 24,  fontSize: 13 },
+      dob:      { type: 'text', label: 'D.O.B',     top: 152, left: 24,  fontSize: 13 },
+      adm:      { type: 'text', label: 'ID No.',    top: 174, left: 24,  fontSize: 13 },
+      addr:     { type: 'text', label: 'Address',   top: 196, left: 24,  fontSize: 13 },
+      photo:    { type: 'box',  label: 'Photo',     top: 30,  left: 288, width: 92, height: 96 },
+      barcode:  { type: 'box',  label: 'Barcode',   top: 200, left: 275, width: 105, height: 46 }
+    },
+    back: {
+      heading:   { type: 'text', label: 'Heading',      top: 20,  left: 24, fontSize: 14 },
+      guardian:  { type: 'text', label: 'Guardian',     top: 52,  left: 24, fontSize: 12 },
+      emergency: { type: 'text', label: 'Emergency',    top: 74,  left: 24, fontSize: 12 },
+      blood:     { type: 'text', label: 'Blood Group',  top: 96,  left: 24, fontSize: 12 },
+      validity:  { type: 'text', label: 'Valid Until',  top: 118, left: 24, fontSize: 12 },
+      terms:     { type: 'text', label: 'Terms',        top: 148, left: 24, fontSize: 9,  width: 230 },
+      qr:        { type: 'box',  label: 'QR Code',      top: 145, left: 300, width: 74, height: 74 },
+      signature: { type: 'text', label: 'Signature',    top: 212, left: 24, fontSize: 9 }
+    }
+  };
+
+  function cloneDefault() { return JSON.parse(JSON.stringify(DEFAULT_LAYOUT)); }
 
   // ---- Elements ----
   const loginScreen = document.getElementById('login-screen');
@@ -139,23 +218,32 @@
   const tplList = document.getElementById('tpl-list');
   const emptyState = document.getElementById('empty-state');
 
-  // ---- Auth state ----
+  const editorPanel = document.getElementById('editor-panel');
+  const editorTplName = document.getElementById('editor-tpl-name');
+  const editorStage = document.getElementById('editor-stage');
+  const editorBg = document.getElementById('editor-bg');
+  const editorTabFront = document.getElementById('editor-tab-front');
+  const editorTabBack = document.getElementById('editor-tab-back');
+  const fieldTuneList = document.getElementById('field-tune-list');
+  const btnEditorSave = document.getElementById('btn-editor-save');
+  const btnEditorCancel = document.getElementById('btn-editor-cancel');
+
+  let currentTpl = null;
+  let currentLayout = null;
+  let currentSide = 'front';
+
+  // ---- Auth ----
   async function checkSession() {
     const { data } = await sb.auth.getSession();
-    if (data.session) {
-      showDashboard(data.session.user.email);
-    } else {
-      showLogin();
-    }
+    if (data.session) showDashboard(data.session.user.email);
+    else showLogin();
   }
-
   function showLogin() {
     loginScreen.style.display = 'block';
     dashboard.style.display = 'none';
     btnLogout.style.display = 'none';
     userEmailLabel.textContent = '';
   }
-
   function showDashboard(email) {
     loginScreen.style.display = 'none';
     dashboard.style.display = 'block';
@@ -163,45 +251,31 @@
     userEmailLabel.textContent = email;
     loadTemplates();
   }
-
   btnLogin.addEventListener('click', async function () {
     loginError.textContent = '';
     btnLogin.disabled = true;
     btnLogin.textContent = 'Logging in…';
-    const { data, error } = await sb.auth.signInWithPassword({
-      email: loginEmail.value.trim(),
-      password: loginPassword.value
-    });
+    const { data, error } = await sb.auth.signInWithPassword({ email: loginEmail.value.trim(), password: loginPassword.value });
     btnLogin.disabled = false;
     btnLogin.textContent = 'Log In';
-    if (error) {
-      loginError.textContent = error.message;
-      return;
-    }
+    if (error) { loginError.textContent = error.message; return; }
     showDashboard(data.user.email);
   });
+  btnLogout.addEventListener('click', async function () { await sb.auth.signOut(); showLogin(); });
 
-  btnLogout.addEventListener('click', async function () {
-    await sb.auth.signOut();
-    showLogin();
-  });
-
-  // ---- Upload a new template ----
+  // ---- Upload new template ----
   btnUpload.addEventListener('click', async function () {
     const name = tplName.value.trim();
     const frontFile = tplFront.files[0];
     const backFile = tplBack.files[0];
-
     if (!name || !frontFile) {
-      uploadStatus.textContent = 'Name and a front image are required.';
       uploadStatus.style.color = '#ff5d5d';
+      uploadStatus.textContent = 'Name and a front image are required.';
       return;
     }
-
     btnUpload.disabled = true;
     uploadStatus.style.color = '#9a9ea8';
     uploadStatus.textContent = 'Uploading front image…';
-
     try {
       const stamp = Date.now();
       const frontPath = stamp + '-front-' + frontFile.name.replace(/\s+/g, '-');
@@ -220,17 +294,13 @@
 
       uploadStatus.textContent = 'Saving template…';
       const { error: dbErr } = await sb.from('templates').insert({
-        name: name,
-        front_image_url: frontUrl,
-        back_image_url: backUrl
+        name: name, front_image_url: frontUrl, back_image_url: backUrl, field_layout: cloneDefault()
       });
       if (dbErr) throw dbErr;
 
       uploadStatus.style.color = '#2fb6a3';
-      uploadStatus.textContent = 'Template added.';
-      tplName.value = '';
-      tplFront.value = '';
-      tplBack.value = '';
+      uploadStatus.textContent = 'Template added. Tap "Edit Layout" below to align fields.';
+      tplName.value = ''; tplFront.value = ''; tplBack.value = '';
       loadTemplates();
     } catch (err) {
       console.error(err);
@@ -241,7 +311,7 @@
     }
   });
 
-  // ---- Load + render templates ----
+  // ---- Load + render template list ----
   async function loadTemplates() {
     tplList.innerHTML = 'Loading…';
     const { data, error } = await sb.from('templates').select('*').order('created_at', { ascending: false });
@@ -252,10 +322,7 @@
       return;
     }
     tplList.innerHTML = '';
-    if (!data || data.length === 0) {
-      emptyState.style.display = 'block';
-      return;
-    }
+    if (!data || data.length === 0) { emptyState.style.display = 'block'; return; }
     emptyState.style.display = 'none';
     data.forEach(function (tpl) {
       const row = document.createElement('div');
@@ -263,9 +330,13 @@
       row.innerHTML =
         '<img src="' + tpl.front_image_url + '" alt="">' +
         '<div class="meta"><strong></strong><span>' + (tpl.back_image_url ? 'Front + Back' : 'Front only') + '</span></div>' +
-        '<button class="btn btn-danger" data-id="' + tpl.id + '">Delete</button>';
+        '<div class="actions">' +
+          '<button class="btn btn-secondary" data-action="layout">Edit Layout</button>' +
+          '<button class="btn btn-danger" data-action="delete">Delete</button>' +
+        '</div>';
       row.querySelector('strong').textContent = tpl.name;
-      row.querySelector('button').addEventListener('click', function () { deleteTemplate(tpl); });
+      row.querySelector('[data-action="layout"]').addEventListener('click', function () { openEditor(tpl); });
+      row.querySelector('[data-action="delete"]').addEventListener('click', function () { deleteTemplate(tpl); });
       tplList.appendChild(row);
     });
   }
@@ -285,15 +356,153 @@
         const backPath = extractPath(tpl.back_image_url);
         if (backPath) pathsToRemove.push(backPath);
       }
-      if (pathsToRemove.length) {
-        await sb.storage.from(BUCKET).remove(pathsToRemove);
-      }
+      if (pathsToRemove.length) await sb.storage.from(BUCKET).remove(pathsToRemove);
       await sb.from('templates').delete().eq('id', tpl.id);
+      if (currentTpl && currentTpl.id === tpl.id) closeEditor();
       loadTemplates();
     } catch (err) {
       alert('Delete failed: ' + err.message);
     }
   }
+
+  // ================= LAYOUT EDITOR =================
+  function openEditor(tpl) {
+    currentTpl = tpl;
+    currentLayout = tpl.field_layout && tpl.field_layout.front ? JSON.parse(JSON.stringify(tpl.field_layout)) : cloneDefault();
+    editorTplName.textContent = tpl.name;
+    editorPanel.style.display = 'block';
+    editorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    switchSide('front');
+  }
+
+  function closeEditor() {
+    editorPanel.style.display = 'none';
+    currentTpl = null;
+    currentLayout = null;
+  }
+  btnEditorCancel.addEventListener('click', closeEditor);
+
+  editorTabFront.addEventListener('click', function () { switchSide('front'); });
+  editorTabBack.addEventListener('click', function () { switchSide('back'); });
+
+  function switchSide(side) {
+    currentSide = side;
+    editorTabFront.classList.toggle('active', side === 'front');
+    editorTabBack.classList.toggle('active', side === 'back');
+
+    const bgUrl = side === 'front' ? currentTpl.front_image_url : currentTpl.back_image_url;
+    if (bgUrl) {
+      editorBg.src = bgUrl;
+      editorBg.style.display = 'block';
+    } else {
+      editorBg.style.display = 'none';
+    }
+    renderFields();
+  }
+
+  function renderFields() {
+    // clear existing drag fields (keep bg image)
+    editorStage.querySelectorAll('.drag-field').forEach(el => el.remove());
+    fieldTuneList.innerHTML = '';
+
+    const fields = currentLayout[currentSide];
+    Object.keys(fields).forEach(function (key) {
+      const f = fields[key];
+
+      // draggable field on stage
+      const el = document.createElement('div');
+      el.className = 'drag-field' + (f.type === 'box' ? ' box' : '');
+      el.textContent = f.label;
+      el.style.top = f.top + 'px';
+      el.style.left = f.left + 'px';
+      if (f.type === 'box') {
+        el.style.width = (f.width || 60) + 'px';
+        el.style.height = (f.height || 30) + 'px';
+      }
+      makeDraggable(el, f);
+      editorStage.appendChild(el);
+
+      // tune row below
+      const row = document.createElement('div');
+      row.className = 'field-tune-row';
+      let extraInputs = '';
+      if (f.type === 'text') {
+        extraInputs = '<label>Size</label><input type="number" class="tune-fontsize" value="' + f.fontSize + '" min="6" max="40">';
+      } else {
+        extraInputs =
+          '<label>W</label><input type="number" class="tune-width" value="' + f.width + '" min="10" max="400">' +
+          '<label>H</label><input type="number" class="tune-height" value="' + f.height + '" min="10" max="250">';
+      }
+      row.innerHTML = '<span class="fname">' + f.label + '</span>' + extraInputs;
+      fieldTuneList.appendChild(row);
+
+      if (f.type === 'text') {
+        row.querySelector('.tune-fontsize').addEventListener('input', function (e) {
+          f.fontSize = parseInt(e.target.value, 10) || f.fontSize;
+          el.style.fontSize = f.fontSize + 'px';
+        });
+      } else {
+        row.querySelector('.tune-width').addEventListener('input', function (e) {
+          f.width = parseInt(e.target.value, 10) || f.width;
+          el.style.width = f.width + 'px';
+        });
+        row.querySelector('.tune-height').addEventListener('input', function (e) {
+          f.height = parseInt(e.target.value, 10) || f.height;
+          el.style.height = f.height + 'px';
+        });
+      }
+    });
+  }
+
+  function makeDraggable(el, fieldData) {
+    let startX, startY, startTop, startLeft, dragging = false;
+
+    el.addEventListener('pointerdown', function (e) {
+      dragging = true;
+      el.setPointerCapture(e.pointerId);
+      startX = e.clientX;
+      startY = e.clientY;
+      startTop = fieldData.top;
+      startLeft = fieldData.left;
+    });
+
+    el.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      const stageRect = editorStage.getBoundingClientRect();
+      const scaleX = 400 / stageRect.width;
+      const scaleY = 250 / stageRect.height;
+      const dx = (e.clientX - startX) * scaleX;
+      const dy = (e.clientY - startY) * scaleY;
+      let newTop = Math.round(startTop + dy);
+      let newLeft = Math.round(startLeft + dx);
+      newTop = Math.max(0, Math.min(250, newTop));
+      newLeft = Math.max(0, Math.min(400, newLeft));
+      fieldData.top = newTop;
+      fieldData.left = newLeft;
+      el.style.top = newTop + 'px';
+      el.style.left = newLeft + 'px';
+    });
+
+    el.addEventListener('pointerup', function () { dragging = false; });
+    el.addEventListener('pointercancel', function () { dragging = false; });
+  }
+
+  btnEditorSave.addEventListener('click', async function () {
+    if (!currentTpl) return;
+    btnEditorSave.disabled = true;
+    btnEditorSave.textContent = 'Saving…';
+    try {
+      const { error } = await sb.from('templates').update({ field_layout: currentLayout }).eq('id', currentTpl.id);
+      if (error) throw error;
+      btnEditorSave.textContent = 'Saved ✓';
+      setTimeout(function () { btnEditorSave.textContent = 'Save Layout'; }, 1500);
+    } catch (err) {
+      alert('Save failed: ' + err.message);
+      btnEditorSave.textContent = 'Save Layout';
+    } finally {
+      btnEditorSave.disabled = false;
+    }
+  });
 
   checkSession();
 })();
