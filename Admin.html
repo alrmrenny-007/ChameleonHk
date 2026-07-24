@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Template Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #14161a; --panel: #1c1f26; --panel-2: #22252d; --border: #2e323c;
+    --text: #e8e9ec; --text-dim: #9a9ea8; --accent: #2fb6a3; --danger: #ff5d5d;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; }
+  header { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  header .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  header h1 { font-size: 16px; font-weight: 600; margin: 0; }
+  header span { font-size: 12px; color: var(--text-dim); margin-left: auto; }
+  #btn-logout { background: none; border: 1px solid var(--border); color: var(--text-dim); border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 28px; }
+
+  /* ---- Login ---- */
+  #login-screen { max-width: 340px; margin: 80px auto; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 26px; }
+  #login-screen h2 { margin-top: 0; font-size: 16px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12.5px; color: var(--text-dim); margin-bottom: 6px; }
+  .field input { width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 7px; padding: 10px 11px; font-size: 13.5px; outline: none; }
+  .field input:focus { border-color: var(--accent); }
+  .btn { width: 100%; padding: 11px; border: none; border-radius: 7px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #57d1bc); color: #06251f; }
+  .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+  #login-error { color: var(--danger); font-size: 12.5px; margin-top: 10px; min-height: 16px; }
+
+  /* ---- Dashboard ---- */
+  #dashboard { display: none; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 22px; margin-bottom: 22px; }
+  .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 0 0 16px; }
+  .row2 { display: flex; gap: 12px; }
+  .row2 .field { flex: 1; }
+  #upload-status { font-size: 12.5px; margin-top: 10px; color: var(--text-dim); min-height: 16px; }
+
+  .tpl-list { display: flex; flex-direction: column; gap: 10px; }
+  .tpl-row { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px; }
+  .tpl-row img { width: 64px; height: 40px; object-fit: cover; border-radius: 4px; background: #333; }
+  .tpl-row .meta { flex: 1; min-width: 0; }
+  .tpl-row .meta strong { display: block; font-size: 13px; }
+  .tpl-row .meta span { font-size: 11px; color: var(--text-dim); }
+  .tpl-row button { flex-shrink: 0; padding: 7px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+  #empty-state { color: var(--text-dim); font-size: 13px; text-align: center; padding: 20px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dot"></div>
+  <h1>Template Admin</h1>
+  <span id="user-email"></span>
+  <button id="btn-logout" style="display:none;">Log out</button>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== LOGIN ===== -->
+  <div id="login-screen">
+    <h2>Admin Login</h2>
+    <div class="field">
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" autocomplete="username">
+    </div>
+    <div class="field">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="btn-login">Log In</button>
+    <div id="login-error"></div>
+  </div>
+
+  <!-- ===== DASHBOARD ===== -->
+  <div id="dashboard">
+
+    <div class="panel">
+      <h2>Add New Template</h2>
+      <div class="field">
+        <label for="tpl-name">Template Name</label>
+        <input type="text" id="tpl-name" placeholder="e.g. Fauget High Student ID">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="tpl-front">Front Image</label>
+          <input type="file" id="tpl-front" accept="image/*">
+        </div>
+        <div class="field">
+          <label for="tpl-back">Back Image (optional)</label>
+          <input type="file" id="tpl-back" accept="image/*">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-upload">Upload Template</button>
+      <div id="upload-status"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Existing Templates</h2>
+      <div class="tpl-list" id="tpl-list"></div>
+      <div id="empty-state" style="display:none;">No templates yet — add one above.</div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+(function () {
+  // ---- Supabase client ----
+  const SUPABASE_URL = 'https://sgiqazrmknpshrjpiarz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnaXFhenJta25wc2hyanBpYXJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4ODkwMjEsImV4cCI6MjEwMDQ2NTAyMX0.VBHcfFhvYh3877yjIJ11ju_YLJyaJBZcWxLAaNgw7vY';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const BUCKET = 'templates';
+
+  // ---- Elements ----
+  const loginScreen = document.getElementById('login-screen');
+  const dashboard = document.getElementById('dashboard');
+  const loginEmail = document.getElementById('login-email');
+  const loginPassword = document.getElementById('login-password');
+  const btnLogin = document.getElementById('btn-login');
+  const loginError = document.getElementById('login-error');
+  const btnLogout = document.getElementById('btn-logout');
+  const userEmailLabel = document.getElementById('user-email');
+
+  const tplName = document.getElementById('tpl-name');
+  const tplFront = document.getElementById('tpl-front');
+  const tplBack = document.getElementById('tpl-back');
+  const btnUpload = document.getElementById('btn-upload');
+  const uploadStatus = document.getElementById('upload-status');
+  const tplList = document.getElementById('tpl-list');
+  const emptyState = document.getElementById('empty-state');
+
+  // ---- Auth state ----
+  async function checkSession() {
+    const { data } = await sb.auth.getSession();
+    if (data.session) {
+      showDashboard(data.session.user.email);
+    } else {
+      showLogin();
+    }
+  }
+
+  function showLogin() {
+    loginScreen.style.display = 'block';
+    dashboard.style.display = 'none';
+    btnLogout.style.display = 'none';
+    userEmailLabel.textContent = '';
+  }
+
+  function showDashboard(email) {
+    loginScreen.style.display = 'none';
+    dashboard.style.display = 'block';
+    btnLogout.style.display = 'inline-block';
+    userEmailLabel.textContent = email;
+    loadTemplates();
+  }
+
+  btnLogin.addEventListener('click', async function () {
+    loginError.textContent = '';
+    btnLogin.disabled = true;
+    btnLogin.textContent = 'Logging in…';
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: loginEmail.value.trim(),
+      password: loginPassword.value
+    });
+    btnLogin.disabled = false;
+    btnLogin.textContent = 'Log In';
+    if (error) {
+      loginError.textContent = error.message;
+      return;
+    }
+    showDashboard(data.user.email);
+  });
+
+  btnLogout.addEventListener('click', async function () {
+    await sb.auth.signOut();
+    showLogin();
+  });
+
+  // ---- Upload a new template ----
+  btnUpload.addEventListener('click', async function () {
+    const name = tplName.value.trim();
+    const frontFile = tplFront.files[0];
+    const backFile = tplBack.files[0];
+
+    if (!name || !frontFile) {
+      uploadStatus.textContent = 'Name and a front image are required.';
+      uploadStatus.style.color = '#ff5d5d';
+      return;
+    }
+
+    btnUpload.disabled = true;
+    uploadStatus.style.color = '#9a9ea8';
+    uploadStatus.textContent = 'Uploading front image…';
+
+    try {
+      const stamp = Date.now();
+      const frontPath = stamp + '-front-' + frontFile.name.replace(/\s+/g, '-');
+      const { error: frontErr } = await sb.storage.from(BUCKET).upload(frontPath, frontFile);
+      if (frontErr) throw frontErr;
+      const frontUrl = sb.storage.from(BUCKET).getPublicUrl(frontPath).data.publicUrl;
+
+      let backUrl = null;
+      if (backFile) {
+        uploadStatus.textContent = 'Uploading back image…';
+        const backPath = stamp + '-back-' + backFile.name.replace(/\s+/g, '-');
+        const { error: backErr } = await sb.storage.from(BUCKET).upload(backPath, backFile);
+        if (backErr) throw backErr;
+        backUrl = sb.storage.from(BUCKET).getPublicUrl(backPath).data.publicUrl;
+      }
+
+      uploadStatus.textContent = 'Saving template…';
+      const { error: dbErr } = await sb.from('templates').insert({
+        name: name,
+        front_image_url: frontUrl,
+        back_image_url: backUrl
+      });
+      if (dbErr) throw dbErr;
+
+      uploadStatus.style.color = '#2fb6a3';
+      uploadStatus.textContent = 'Template added.';
+      tplName.value = '';
+      tplFront.value = '';
+      tplBack.value = '';
+      loadTemplates();
+    } catch (err) {
+      console.error(err);
+      uploadStatus.style.color = '#ff5d5d';
+      uploadStatus.textContent = 'Upload failed: ' + (err.message || 'unknown error');
+    } finally {
+      btnUpload.disabled = false;
+    }
+  });
+
+  // ---- Load + render templates ----
+  async function loadTemplates() {
+    tplList.innerHTML = 'Loading…';
+    const { data, error } = await sb.from('templates').select('*').order('created_at', { ascending: false });
+    if (error) {
+      tplList.innerHTML = '';
+      emptyState.style.display = 'block';
+      emptyState.textContent = 'Could not load templates: ' + error.message;
+      return;
+    }
+    tplList.innerHTML = '';
+    if (!data || data.length === 0) {
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+    data.forEach(function (tpl) {
+      const row = document.createElement('div');
+      row.className = 'tpl-row';
+      row.innerHTML =
+        '<img src="' + tpl.front_image_url + '" alt="">' +
+        '<div class="meta"><strong></strong><span>' + (tpl.back_image_url ? 'Front + Back' : 'Front only') + '</span></div>' +
+        '<button class="btn btn-danger" data-id="' + tpl.id + '">Delete</button>';
+      row.querySelector('strong').textContent = tpl.name;
+      row.querySelector('button').addEventListener('click', function () { deleteTemplate(tpl); });
+      tplList.appendChild(row);
+    });
+  }
+
+  async function deleteTemplate(tpl) {
+    if (!confirm('Delete "' + tpl.name + '"? This cannot be undone.')) return;
+    try {
+      const pathsToRemove = [];
+      const extractPath = function (url) {
+        const marker = '/object/public/' + BUCKET + '/';
+        const idx = url.indexOf(marker);
+        return idx === -1 ? null : url.substring(idx + marker.length);
+      };
+      const frontPath = extractPath(tpl.front_image_url);
+      if (frontPath) pathsToRemove.push(frontPath);
+      if (tpl.back_image_url) {
+        const backPath = extractPath(tpl.back_image_url);
+        if (backPath) pathsToRemove.push(backPath);
+      }
+      if (pathsToRemove.length) {
+        await sb.storage.from(BUCKET).remove(pathsToRemove);
+      }
+      await sb.from('templates').delete().eq('id', tpl.id);
+      loadTemplates();
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
+  }
+
+  checkSession();
+})();
+</script>
+
+</body>
+</html>
